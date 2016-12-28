@@ -52,7 +52,7 @@ nhl.playoffs <- function(year){
   points$`Points in 2-1 System` <- as.integer(as.character(points$`Points in 2-1 System`))
   points$`Points in 3-2-1-0 System` <- as.integer(as.character(points$`Points in 3-2-1-0 System`))
   
-  # Make within the conference divisions
+  # Make divisions within the conference
   central <- as.data.frame(cbind(central.teams, rep(0, length(central.teams)), rep(0, length(central.teams))))
   metropolitan <- as.data.frame(cbind(metropolitan.teams, rep(0, length(metropolitan.teams)), rep(0, length(metropolitan.teams))))
   pacific <- as.data.frame(cbind(pacific.teams, rep(0, length(pacific.teams)), rep(0, length(pacific.teams))))
@@ -78,7 +78,7 @@ nhl.playoffs <- function(year){
   pacific$`Points in 2-1-0` <- as.numeric(as.character(pacific$`Points in 2-1-0`))
   pacific$`Points in 3-2-1-0` <- as.numeric(as.character(pacific$`Points in 3-2-1-0`))
   
-  # Fill in divisional 
+  # Fill in divisions 
   for(i in 1:nrow(points)){
     team <- points$Team[i]
     if(team %in% central$Team){
