@@ -1,6 +1,6 @@
 cat('\014')
 library(XML)
-source('NHL Helper Functions.R')
+source('NHL Helper Functions 2.R')
 
 # Current format and alignment
 if(year >= 2014){
@@ -157,211 +157,32 @@ if(year >= 2014){
 }
 
 # Atlanta moved to Winnipeg in 2011-2012 (year = 2012)
-if(year >= 2012 & year < 2014){
-  reg.season <- link.reader(year)
-  names(reg.season) <- c("Date", "Away Team", "Goals Away", "Home Team", "Goals Home", "OT/SO", "Attendance", "LOG", "Notes")
-  
-  teams <- sort(unique(reg.season$`Away Team`))
-  
-  # Divide teams into Eastern and Western Conferences
-  east.teams <- c("Boston Bruins", "Buffalo Sabres", "Carolina Hurricanes", "Florida Panthers", "Montreal Canadiens", "New Jersey Devils", "New York Islanders", "New York Rangers", "Ottawa Senators", "Philadelphia Flyers", "Pittsburgh Penguins", "Tampa Bay Lightning", "Toronto Maple Leafs", "Washington Capitals", "Winnipeg Jets")
-  west.teams <- teams[!(teams %in% east.teams)]
-  
-  atlantic.teams <- c("New Jersey Devils", "New York Islanders", "New York Rangers", "Philadelphia Flyers", "Pittsburgh Penguins")
-  northeast.teams <- c("Boston Bruins", "Buffalo Sabres", "Montreal Canadiens", "Ottawa Senators", "Toronto Maple Leafs")
-  southeast.teams <- c("Carolina Hurricanes", "Florida Panthers", "Tampa Bay Lightning", "Washington Capitals", "Winnipeg Jets")
-  
-  central.teams <- c("Chicago Blackhawks", "Columbus Blue Jackets", "Detroit Red Wings", "Nashville Predators", "St. Louis Blues")
-  northwest.teams <- c("Calgary Flames", "Colorado Avalanche", "Edmonton Oilers", "Minnesota Wild", "Vancouver Canucks")
-  pacific.teams <- c("Dallas Stars", "Los Angeles Kings", "Anaheim Ducks", "Phoenix Coyotes", "San Jose Sharks")
-  
-  # Gets data to be of right types
-  reg.season$`Goals Away` <- as.numeric(as.character(reg.season$`Goals Away`))
-  reg.season$`Goals Home` <- as.numeric(as.character(reg.season$`Goals Home`))
-  
-  reg.season <- na.omit(reg.season) # THIS LINE REMOVES ANY POSTPONED GAMES
-  
-  # Cleans data
-  for(i in 1:nrow(reg.season)){
-    # Gets winners and losers for each game
-    if(reg.season$`Goals Away`[i] > reg.season$`Goals Home`[i]){
-      reg.season[["Winner"]][i] <- reg.season$`Away Team`[i]
-      reg.season[["Loser"]][i] <- reg.season$`Home Team`[i]
-    }
-    else{
-      reg.season[["Winner"]][i] <- reg.season$`Home Team`[i]
-      reg.season[["Loser"]][i] <- reg.season$`Away Team`[i]
-    }
-    # Assigns points: 2 for any win, 1 for an OT loss or tie, and 0 for regulation loss
-    if(reg.season$`OT/SO`[i] == ""){
-      reg.season[["Winner Points Awarded"]][i] <- 2
-      reg.season[["Loser Points Awarded"]][i] <- 0
-    }
-    else{
-      if(reg.season$`OT/SO`[i] != "" & (reg.season$`Goals Away`[i] != reg.season$`Goals Home`[i])){
-        reg.season[["Winner Points Awarded"]][i] <- 2
-        reg.season[["Loser Points Awarded"]][i] <- 1
-      }
-      else{
-        reg.season[["Winner Points Awarded"]][i] <- 1
-        reg.season[["Loser Points Awarded"]][i] <- 1
-      }
-    }
-  }
-  
-  points <- data.frame(
-    teams,
-    Points = as.numeric(as.character(unlist(lapply(teams, point.totaler, df = reg.season)))), # Assigns point totals for each team under 2.1 system
-    reg.wins = as.numeric(as.character(unlist(lapply(teams, reg.win.counter, df = reg.season)))), # Regulation wins
-    ot.wins = as.numeric(as.character(unlist(lapply(teams, ot.win.counter, df = reg.season)))), # Overtime wins
-    so.wins = as.numeric(as.character(unlist(lapply(teams, so.win.counter, df = reg.season)))), # Shootout wins
-    reg.loss = as.numeric(as.character(unlist(lapply(teams, reg.loss.counter, df = reg.season)))), # Regulation losses
-    ot.loss = as.numeric(as.character(unlist(lapply(teams, ot.loss.counter, df = reg.season)))), # Overtime losses
-    so.loss = as.numeric(as.character(unlist(lapply(teams, so.loss.counter, df = reg.season)))), # Shootout losses
-    gf = as.numeric(as.character(unlist(lapply(teams, goals.for, df = reg.season)))), # Goals for
-    ga = as.numeric(as.character(unlist(lapply(teams, goals.against, df = reg.season)))),
-    gp = as.numeric(as.character(unlist(lapply(teams, gp, df = reg.season)))),
-    stringsAsFactors = F
-  )
-  
-  points[["ROW"]] <- points$reg.wins + points$ot.wins
-  points[["DIFF"]] <- points$gf - points$ga
-  
-  # Builds divisions
-  atlantic <- div.builder("atlantic")
-  northeast <- div.builder("northeast")
-  southeast <- div.builder("southeast")
-  central <- div.builder("central")
-  northwest <- div.builder("northwest")
-  pacific <- div.builder("pacific")
-  
-  # Fill in division
-  for(i in 1:nrow(points)){
-    team <- points$teams[i]
-    if(team %in% atlantic$Team){
-      atlantic$Points[atlantic$Team == team] <- points$Points[points$teams == team]
-      atlantic$reg.wins[atlantic$Team == team] <- points$reg.wins[points$teams == team]
-      atlantic$ot.wins[atlantic$Team == team] <- points$ot.wins[points$teams == team]
-      atlantic$so.wins[atlantic$Team == team] <- points$so.wins[points$teams == team]
-      atlantic$reg.loss[atlantic$Team == team] <- points$reg.loss[points$teams == team]
-      atlantic$ot.loss[atlantic$Team == team] <- points$ot.loss[points$teams == team]
-      atlantic$so.loss[atlantic$Team == team] <- points$so.loss[points$teams == team]
-      atlantic$gf[atlantic$Team == team] <- points$gf[points$teams == team]
-      atlantic$ga[atlantic$Team == team] <- points$ga[points$teams == team]
-      atlantic$gp[atlantic$Team == team] <- points$gp[points$teams == team]
-      atlantic$ROW[atlantic$Team == team] <- points$ROW[points$teams == team]
-      atlantic$DIFF[atlantic$Team == team] <- points$DIFF[points$teams == team]
-    }
-    else{
-      if(team %in% northeast$Team){
-        northeast$Points[northeast$Team == team] <- points$Points[points$teams == team]
-        northeast$reg.wins[northeast$Team == team] <- points$reg.wins[points$teams == team]
-        northeast$ot.wins[northeast$Team == team] <- points$ot.wins[points$teams == team]
-        northeast$so.wins[northeast$Team == team] <- points$so.wins[points$teams == team]
-        northeast$reg.loss[northeast$Team == team] <- points$reg.loss[points$teams == team]
-        northeast$ot.loss[northeast$Team == team] <- points$ot.loss[points$teams == team]
-        northeast$so.loss[northeast$Team == team] <- points$so.loss[points$teams == team]
-        northeast$gf[northeast$Team == team] <- points$gf[points$teams == team]
-        northeast$ga[northeast$Team == team] <- points$ga[points$teams == team]
-        northeast$gp[northeast$Team == team] <- points$gp[points$teams == team]
-        northeast$ROW[northeast$Team == team] <- points$ROW[points$teams == team]
-        northeast$DIFF[northeast$Team == team] <- points$DIFF[points$teams == team]
-      }
-      else{
-        if(team %in% southeast$Team){
-          southeast$Points[southeast$Team == team] <- points$Points[points$teams == team]
-          southeast$reg.wins[southeast$Team == team] <- points$reg.wins[points$teams == team]
-          southeast$ot.wins[southeast$Team == team] <- points$ot.wins[points$teams == team]
-          southeast$so.wins[southeast$Team == team] <- points$so.wins[points$teams == team]
-          southeast$reg.loss[southeast$Team == team] <- points$reg.loss[points$teams == team]
-          southeast$ot.loss[southeast$Team == team] <- points$ot.loss[points$teams == team]
-          southeast$so.loss[southeast$Team == team] <- points$so.loss[points$teams == team]
-          southeast$gf[southeast$Team == team] <- points$gf[points$teams == team]
-          southeast$ga[southeast$Team == team] <- points$ga[points$teams == team]
-          southeast$gp[southeast$Team == team] <- points$gp[points$teams == team]
-          southeast$ROW[southeast$Team == team] <- points$ROW[points$teams == team]
-          southeast$DIFF[southeast$Team == team] <- points$DIFF[points$teams == team]
-        }
-        else{
-          if(team %in% central$Team){
-            central$Points[central$Team == team] <- points$Points[points$teams == team]
-            central$reg.wins[central$Team == team] <- points$reg.wins[points$teams == team]
-            central$ot.wins[central$Team == team] <- points$ot.wins[points$teams == team]
-            central$so.wins[central$Team == team] <- points$so.wins[points$teams == team]
-            central$reg.loss[central$Team == team] <- points$reg.loss[points$teams == team]
-            central$ot.loss[central$Team == team] <- points$ot.loss[points$teams == team]
-            central$so.loss[central$Team == team] <- points$so.loss[points$teams == team]
-            central$gf[central$Team == team] <- points$gf[points$teams == team]
-            central$ga[central$Team == team] <- points$ga[points$teams == team]
-            central$gp[central$Team == team] <- points$gp[points$teams == team]
-            central$ROW[central$Team == team] <- points$ROW[points$teams == team]
-            central$DIFF[central$Team == team] <- points$DIFF[points$teams == team]
-          }
-          else{
-            if(team %in% northwest$Team){
-              northwest$Points[northwest$Team == team] <- points$Points[points$teams == team]
-              northwest$reg.wins[northwest$Team == team] <- points$reg.wins[points$teams == team]
-              northwest$ot.wins[northwest$Team == team] <- points$ot.wins[points$teams == team]
-              northwest$so.wins[northwest$Team == team] <- points$so.wins[points$teams == team]
-              northwest$reg.loss[northwest$Team == team] <- points$reg.loss[points$teams == team]
-              northwest$ot.loss[northwest$Team == team] <- points$ot.loss[points$teams == team]
-              northwest$so.loss[northwest$Team == team] <- points$so.loss[points$teams == team]
-              northwest$gf[northwest$Team == team] <- points$gf[points$teams == team]
-              northwest$ga[northwest$Team == team] <- points$ga[points$teams == team]
-              northwest$gp[northwest$Team == team] <- points$gp[points$teams == team]
-              northwest$ROW[northwest$Team == team] <- points$ROW[points$teams == team]
-              northwest$DIFF[northwest$Team == team] <- points$DIFF[points$teams == team]
-            }
-            else{
-              if(team %in% pacific$Team){
-                pacific$Points[pacific$Team == team] <- points$Points[points$teams == team]
-                pacific$reg.wins[pacific$Team == team] <- points$reg.wins[points$teams == team]
-                pacific$ot.wins[pacific$Team == team] <- points$ot.wins[points$teams == team]
-                pacific$so.wins[pacific$Team == team] <- points$so.wins[points$teams == team]
-                pacific$reg.loss[pacific$Team == team] <- points$reg.loss[points$teams == team]
-                pacific$ot.loss[pacific$Team == team] <- points$ot.loss[points$teams == team]
-                pacific$so.loss[pacific$Team == team] <- points$so.loss[points$teams == team]
-                pacific$gf[pacific$Team == team] <- points$gf[points$teams == team]
-                pacific$ga[pacific$Team == team] <- points$ga[points$teams == team]
-                pacific$gp[pacific$Team == team] <- points$gp[points$teams == team]
-                pacific$ROW[pacific$Team == team] <- points$ROW[points$teams == team]
-                pacific$DIFF[pacific$Team == team] <- points$DIFF[points$teams == team]
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  
-  a <- div.orderer(atlantic, df1 = reg.season, df2 = atlantic, df3 = reg.season, df4 = points)
-  ne <- div.orderer(northeast, df1 = reg.season, df2 = northeast, df3 = reg.season, df4 = points)
-  se <- div.orderer(southeast, df1 = reg.season, df2 = southeast, df3 = reg.season, df4 = points)
-  c <- div.orderer(central, df1 = reg.season, df2 = central, df3 = reg.season, df4 = points)
-  nw <- div.orderer(northwest, df1 = reg.season, df2 = northwest, df3 = reg.season, df4 = points)
-  p <- div.orderer(pacific, df1 = reg.season, df2 = pacific, df3 = reg.season, df4 = points)
-  
-  east.playoffs <- playoff.picture.builder2(a, ne, se)
-  west.playoffs <- playoff.picture.builder2(c, nw, p)
-  
-  list(east.playoffs, west.playoffs)
-}
 
 # ROW tiebreaker instituted 2010-2011, old alignment
-if(year > 2010 & year < 2012){
+if(year > 2010 & year < 2014){
   reg.season <- link.reader(year)
   names(reg.season) <- c("Date", "Away Team", "Goals Away", "Home Team", "Goals Home", "OT/SO", "Attendance", "LOG", "Notes")
   
   teams <- sort(unique(reg.season$`Away Team`))
   
   # Divide teams into Eastern and Western Conferences
-  east.teams <- c("Atlanta Thrashers", "Boston Bruins", "Buffalo Sabres", "Carolina Hurricanes", "Florida Panthers", "Montreal Canadiens", "New Jersey Devils", "New York Islanders", "New York Rangers", "Ottawa Senators", "Philadelphia Flyers", "Pittsburgh Penguins", "Tampa Bay Lightning", "Toronto Maple Leafs", "Washington Capitals")
+  if(year < 2012){
+    east.teams <- c("Atlanta Thrashers", "Boston Bruins", "Buffalo Sabres", "Carolina Hurricanes", "Florida Panthers", "Montreal Canadiens", "New Jersey Devils", "New York Islanders", "New York Rangers", "Ottawa Senators", "Philadelphia Flyers", "Pittsburgh Penguins", "Tampa Bay Lightning", "Toronto Maple Leafs", "Washington Capitals")
+  }
+  if(year >= 2012){
+    east.teams <- c("Boston Bruins", "Buffalo Sabres", "Carolina Hurricanes", "Florida Panthers", "Montreal Canadiens", "New Jersey Devils", "New York Islanders", "New York Rangers", "Ottawa Senators", "Philadelphia Flyers", "Pittsburgh Penguins", "Tampa Bay Lightning", "Toronto Maple Leafs", "Washington Capitals", "Winnipeg Jets")
+    
+  }
   west.teams <- teams[!(teams %in% east.teams)]
   
   atlantic.teams <- c("New Jersey Devils", "New York Islanders", "New York Rangers", "Philadelphia Flyers", "Pittsburgh Penguins")
   northeast.teams <- c("Boston Bruins", "Buffalo Sabres", "Montreal Canadiens", "Ottawa Senators", "Toronto Maple Leafs")
-  southeast.teams <- c("Atlanta Thrashers", "Carolina Hurricanes", "Florida Panthers", "Tampa Bay Lightning", "Washington Capitals")
-  
+  if(year < 2012){
+    southeast.teams <- c("Atlanta Thrashers", "Carolina Hurricanes", "Florida Panthers", "Tampa Bay Lightning", "Washington Capitals")
+  }
+  if(year >= 2012){
+    southeast.teams <- c("Carolina Hurricanes", "Florida Panthers", "Tampa Bay Lightning", "Washington Capitals", "Winnipeg Jets")
+  }
   central.teams <- c("Chicago Blackhawks", "Columbus Blue Jackets", "Detroit Red Wings", "Nashville Predators", "St. Louis Blues")
   northwest.teams <- c("Calgary Flames", "Colorado Avalanche", "Edmonton Oilers", "Minnesota Wild", "Vancouver Canucks")
   pacific.teams <- c("Dallas Stars", "Los Angeles Kings", "Anaheim Ducks", "Phoenix Coyotes", "San Jose Sharks")
