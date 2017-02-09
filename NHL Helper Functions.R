@@ -529,6 +529,7 @@ playoff.picture.builder1 <- function(div1, div2, div3, ...){
   return(out)
 }
 
+# Builds playoff picture for 2010-2014
 playoff.picture.builder2 <- function(div1, div2, div3, ...){
   
   out = character(length = 8)
@@ -570,6 +571,7 @@ playoff.picture.builder2 <- function(div1, div2, div3, ...){
   return(out)
 }
 
+# Creates divisions for 2006-2010
 div.builder2 <- function(division, ...){
   div.teams <- paste(division, ".teams", sep = "")
   div <- data.frame(
@@ -585,6 +587,7 @@ div.builder2 <- function(division, ...){
   return(div)
 }
 
+# Orders divisions for 
 div.orderer2 <- function(div, df5, df2, df3, df4){
   div.copy <- div
   out <- data.frame(
