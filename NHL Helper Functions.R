@@ -1,39 +1,3 @@
-teams <- sort(c("Boston Bruins", "Buffalo Sabres", "Carolina Hurricanes", "Columbus Blue Jackets",
-           "Detroit Red Wings", "Florida Panthers", "Montreal Canadiens", "New Jersey Devils",
-           "New York Islanders", "New York Rangers", "Ottawa Senators", "Philadelphia Flyers",
-           "Pittsburgh Penguins", "Tampa Bay Lightning", "Toronto Maple Leafs",
-           "Washington Capitals", "Anaheim Ducks", "Arizona Coyotes", "Calgary Flames", "Chicago Blackhawks", "Colorado Avalanche",
-           "Dallas Stars", "Edmonton Oilers", "Los Angeles Kings", "Minnesota Wild", "Nashville Predators",
-           "San Jose Sharks", "St. Louis Blues", "Vancouver Canucks", "Winnipeg Jets"))
-
-east.teams <- c("Boston Bruins", "Buffalo Sabres", "Carolina Hurricanes", "Columbus Blue Jackets",
-                "Detroit Red Wings", "Florida Panthers", "Montreal Canadiens", "New Jersey Devils",
-                "New York Islanders", "New York Rangers", "Ottawa Senators", "Philadelphia Flyers",
-                "Pittsburgh Penguins", "Tampa Bay Lightning", "Toronto Maple Leafs",
-                "Washington Capitals")
-
-west.teams <- teams[!(teams %in% east.teams)]
-
-metropolitan.teams <- c("Carolina Hurricanes", "Columbus Blue Jackets", "New Jersey Devils",
-                        "New York Islanders", "New York Rangers", "Philadelphia Flyers",
-                        "Pittsburgh Penguins", "Washington Capitals")
-
-atlantic.teams <- east.teams[!(east.teams %in% metropolitan.teams)]
-
-pacific.teams <- c("Anaheim Ducks", "Arizona Coyotes", "Calgary Flames", "Edmonton Oilers",
-                   "Los Angeles Kings", "San Jose Sharks", "Vancouver Canucks")
-
-central.teams <- west.teams[!(west.teams %in% pacific.teams)]
-
-readYear <- function(){ 
-  n <- readline(prompt="Enter year: ")
-  if(!grepl("^[0-9]+$", n)){
-    return(readYear())
-  }
-  
-  return(as.integer(n))
-}
-
 # Reads in game-by-game schedule and results for given year (where year is of cup, not beginning of season)
 link.reader <- function(year){
   link.part.1 <- paste("http://www.hockey-reference.com/leagues/NHL_", year, sep = "")
